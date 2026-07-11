@@ -1,0 +1,26 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const issues = await getCollection('issues');
+  return issues.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const base = import.meta.env.BASE_URL;
+const dateText = entry.data.date.toISOString().slice(0, 10);
+---
+
+<Base
+  title={`${entry.data.title} · Kzyo 每日简报`}
+  description={`Kzyo 每日简报${entry.data.title}（${dateText}）：AI 技术博客、因果推断与营销科学、即刻动态精选。`}
+>
+  <h1>{entry.data.title}</h1>
+  <p class="issue-meta">
+    <time datetime={dateText}>{dateText}</time> ·
+    <a href={`${base}archive/`}>返回归档</a>
+  </p>
+  <Content />
+</Base>

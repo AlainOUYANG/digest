@@ -1,7 +1,32 @@
 ---
+import { getCollection, render } from 'astro:content';
 import Base from '../layouts/Base.astro';
+
+const issues = (await getCollection('issues')).sort(
+  (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+);
+const latest = issues[0];
+const base = import.meta.env.BASE_URL;
+const dateText = latest?.data.date.toISOString().slice(0, 10);
+const Content = latest ? (await render(latest)).Content : null;
 ---
 
-<Base title="Kzyo 每日简报" description="每天聚合 AI 技术博客、因果推断与营销科学、即刻动态的中文简报。">
-  <p>首期尚未生成。</p>
+<Base
+  title="Kzyo 每日简报"
+  description="每天聚合 AI 技术博客、因果推断与营销科学、即刻动态的中文简报。"
+>
+  {
+    latest && Content ? (
+      <>
+        <h1>{latest.data.title}</h1>
+        <p class="issue-meta">
+          <time datetime={dateText}>{dateText}</time> · 每日 19 点更新 ·
+          <a href={`${base}archive/`}>查看归档</a>
+        </p>
+        <Content />
+      </>
+    ) : (
+      <p>首期尚未生成。</p>
+    )
+  }
 </Base>
