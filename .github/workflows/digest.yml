@@ -1,0 +1,63 @@
+name: Daily digest
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: daily-digest
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    services:
+      rsshub:
+        image: diygod/rsshub
+        ports:
+          - '1200:1200'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node scripts/run-digest.mjs
+        env:
+          ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
+          ARK_MODEL: ${{ secrets.ARK_MODEL }}
+          RSSHUB_BASES: http://localhost:1200,https://rsshub.app
+      - run: node scripts/verify-issues.mjs
+      - name: Commit issue
+        run: |
+          git config user.name "digest-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add src/content/issues
+          git diff --cached --quiet || git commit -m "content: $(date -u +%F) 期简报"
+          git push
+
+  # Actions 内用 GITHUB_TOKEN push 不会触发 deploy.yml，因此这里自带构建与部署
+  publish:
+    needs: generate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+      - name: Install, build, and upload Astro site
+        uses: withastro/action@v6
+
+  deploy:
+    needs: publish
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5
