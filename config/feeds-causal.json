@@ -1,0 +1,10 @@
+[
+  { "name": "arXiv stat.ME", "url": "https://rss.arxiv.org/rss/stat.ME" },
+  { "name": "arXiv econ.EM", "url": "https://rss.arxiv.org/rss/econ.EM" },
+  { "name": "Statistical Modeling (Gelman)", "url": "https://statmodeling.stat.columbia.edu/feed/" },
+  { "name": "Causal Analysis (Pearl)", "url": "http://causality.cs.ucla.edu/blog/index.php/feed/" },
+  { "name": "Causal Inference for the Brave and True (Facure)", "url": "https://matheusfacure.github.io/feed.xml" },
+  { "name": "Netflix TechBlog", "url": "https://netflixtechblog.com/feed" },
+  { "name": "Towards Data Science", "url": "https://towardsdatascience.com/feed" },
+  { "name": "Solomon Kurz", "url": "https://solomonkurz.netlify.app/index.xml" }
+]
