@@ -1,0 +1,29 @@
+:root {
+  color-scheme: light;
+  --color-bg: #f4f0e8;
+  --color-bg-deep: #24231f;
+  --color-surface: #f8f5ef;
+  --color-surface-raised: #fffdf8;
+  --color-surface-soft: #ebe6dd;
+  --color-text: #24231f;
+  --color-muted: #6f6b62;
+  --color-subtle: #6f6b62;
+  --color-border: #d8d2c7;
+  --color-border-strong: #aaa399;
+  --color-accent: #9b4f3f;
+  --color-accent-soft: #7f3f33;
+  --color-accent-amber: #8f6036;
+  --radius-card: 0.65rem;
+  --radius-pill: 999px;
+  --content-width: 64rem;
+  --reading-width: 45rem;
+  --gutter: clamp(1.1rem, 4vw, 2.5rem);
+  --section-space: clamp(4rem, 8vw, 7rem);
+  --font-latin: "Source Sans 3 Variable";
+  --font-cjk: "LXGW WenKai UI";
+  --font-cjk-full: "LXGW WenKai";
+  --font-body: var(--font-latin), var(--font-cjk), var(--font-cjk-full), "Helvetica Neue", Arial, "Kaiti SC", STKaiti, sans-serif;
+  --font-display: var(--font-body);
+  --font-sans: var(--font-body);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}

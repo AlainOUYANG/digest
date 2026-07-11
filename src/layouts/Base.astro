@@ -1,0 +1,49 @@
+---
+import '@fontsource-variable/source-sans-3/wght.css';
+import 'lxgw-wenkai-webfont/lxgwwenkai-regular.css';
+import '../styles/global.css';
+
+type Props = {
+  title: string;
+  description: string;
+};
+
+const { title, description } = Astro.props;
+const base = import.meta.env.BASE_URL;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <link rel="alternate" type="application/rss+xml" title="Kzyo 每日简报" href={`${base}rss.xml`} />
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-header__name" href={base}>Kzyo · 每日简报</a>
+        <nav>
+          <a href={base}>最新</a>
+          <a href={`${base}archive/`}>归档</a>
+          <a href="https://alainouyang.github.io/">主站</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <slot />
+    </main>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <span>© {new Date().getFullYear()} Kzyo</span>
+        <a href={`${base}rss.xml`}>RSS</a>
+      </div>
+    </footer>
+  </body>
+</html>
