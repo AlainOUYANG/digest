@@ -2,6 +2,8 @@ name: Daily digest
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 11 * * *'
 
 permissions:
   contents: write
@@ -62,4 +64,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
-# 每日定时（cron）在首期验收通过后启用
