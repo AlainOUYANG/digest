@@ -42,8 +42,8 @@ export async function selectAndSummarize(chat, section, items) {
   for (let tries = 0; tries < 2; tries += 1) {
     try {
       return { picks: await attempt(chat, section, items), degraded: false };
-    } catch {
-      // 重试一次，仍失败则走降级
+    } catch (e) {
+      console.error(`[${section.name}] 第 ${tries + 1} 次尝试失败：${e.message}`);
     }
   }
   const picks = [...items]
