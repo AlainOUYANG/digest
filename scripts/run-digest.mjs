@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, readdirSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 'node:fs';
 import { fetchGroup } from './lib/feeds.mjs';
 import { createClient } from './lib/llm.mjs';
 import { selectAndSummarize } from './lib/select.mjs';
@@ -31,6 +31,7 @@ for (const cfg of sectionsCfg) {
   console.log(`[${cfg.name}] 候选 ${items.length} 条，入选 ${picks.length} 条${degraded ? '（降级）' : ''}`);
 }
 
+mkdirSync(CONTENT_DIR, { recursive: true });
 const existing = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.md')).sort();
 const todayFile = new URL(`${today}.md`, CONTENT_DIR);
 let number = existing.length + 1;
