@@ -41,3 +41,5 @@ if (existsSync(todayFile)) {
 }
 writeFileSync(todayFile, renderIssue({ number, date: today, sections, failedSources }));
 console.log(`已生成第 ${number} 期（${today}），不可用源 ${failedSources.length} 个`);
+// RSS/LLM 的 keep-alive 连接会拖住事件循环导致进程不退出，脚本收尾显式退出
+process.exit(0);
