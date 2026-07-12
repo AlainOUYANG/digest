@@ -61,3 +61,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+# 每日定时（cron）在首期验收通过后启用
