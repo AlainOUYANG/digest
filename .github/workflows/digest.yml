@@ -15,6 +15,7 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     services:
       rsshub:
         image: diygod/rsshub
