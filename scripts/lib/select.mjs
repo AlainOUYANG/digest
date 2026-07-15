@@ -30,7 +30,7 @@ async function attempt(chat, section, items) {
       { role: 'system', content: '你是中文技术编辑，只输出 JSON，不输出其他文字。' },
       {
         role: 'user',
-        content: `为每条写 1-2 句中文摘要，不复述标题，不超过 80 字，输出 [{"i":序号,"summary":"..."}]：\n${JSON.stringify(chosen.map((c, i) => ({ i, title: c.title, snippet: c.snippet })))}`,
+        content: `为每条写 3-4 句中文摘要（120-180 字）：先说讲了什么，再给关键结论或数据，最后一句说为什么值得读。原文很短的条目（如社交动态）提炼核心观点即可，不要硬凑字数。只输出 JSON [{"i":序号,"summary":"..."}]：\n${JSON.stringify(chosen.map((c, i) => ({ i, title: c.title, text: (c.content ?? c.snippet).slice(0, 2000) })))}`,
       },
     ]),
   );
