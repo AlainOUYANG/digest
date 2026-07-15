@@ -9,13 +9,29 @@ export function withinWindow(item, now = new Date(), hours = 24) {
   return age >= 0 && age <= hours * 3600 * 1000;
 }
 
+export function stripHtml(html) {
+  return String(html)
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 export function normalizeItem(raw, sourceName) {
+  const fullText = raw['content:encoded'] || raw.content || '';
+  const snippet = (raw.contentSnippet ?? '').slice(0, 500);
   return {
     title: (raw.title ?? '').trim(),
     link: raw.link ?? '',
     author: raw.creator || raw.author || sourceName,
     source: sourceName,
-    snippet: (raw.contentSnippet ?? '').slice(0, 500),
+    snippet,
+    content: (fullText ? stripHtml(fullText) : snippet).slice(0, 2500),
     isoDate: raw.isoDate ?? null,
   };
 }

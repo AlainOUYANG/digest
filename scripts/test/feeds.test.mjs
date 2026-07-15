@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { withinWindow, normalizeItem } from '../lib/feeds.mjs';
+import { withinWindow, normalizeItem, stripHtml } from '../lib/feeds.mjs';
 
 const now = new Date('2026-07-12T12:00:00Z');
 
@@ -31,4 +31,20 @@ test('normalizeItem 无作者时回退到源名', () => {
 test('normalizeItem 截断 snippet 到 500 字', () => {
   const item = normalizeItem({ title: 'T', link: 'x', contentSnippet: 'a'.repeat(600) }, 'S');
   assert.equal(item.snippet.length, 500);
+});
+
+test('stripHtml 剥标签并解码常见实体', () => {
+  assert.equal(stripHtml('<p>a &amp; b&nbsp;<b>c</b></p>'), 'a & b c');
+});
+
+test('normalizeItem 优先 content:encoded 并截断 2500 字', () => {
+  const raw = { title: 'T', link: 'x', contentSnippet: 'short', 'content:encoded': `<p>${'长'.repeat(3000)}</p>` };
+  const item = normalizeItem(raw, 'S');
+  assert.equal(item.content.length, 2500);
+  assert.ok(!item.content.includes('<p>'));
+});
+
+test('normalizeItem 无全文时 content 回退 snippet', () => {
+  const item = normalizeItem({ title: 'T', link: 'x', contentSnippet: 'only snippet' }, 'S');
+  assert.equal(item.content, 'only snippet');
 });
