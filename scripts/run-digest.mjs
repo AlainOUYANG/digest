@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, mkdirSync } from 
 import { fetchGroup } from './lib/feeds.mjs';
 import { createClient } from './lib/llm.mjs';
 import { selectAndSummarize } from './lib/select.mjs';
+import { buildTrend } from './lib/trend.mjs';
 import { renderIssue } from './lib/render.mjs';
 
 const CONTENT_DIR = new URL('../src/content/issues/', import.meta.url);
@@ -32,6 +33,9 @@ for (const cfg of sectionsCfg) {
 }
 
 mkdirSync(CONTENT_DIR, { recursive: true });
+const trend = await buildTrend(chat, sections);
+console.log(`[今日趋势] ${trend ? '已生成' : '本期省略'}`);
+
 const existing = readdirSync(CONTENT_DIR).filter((f) => f.endsWith('.md')).sort();
 const todayFile = new URL(`${today}.md`, CONTENT_DIR);
 let number = existing.length + 1;
@@ -39,7 +43,7 @@ if (existsSync(todayFile)) {
   const m = readFileSync(todayFile, 'utf8').match(/^issue: (\d+)$/m);
   if (m) number = Number(m[1]);
 }
-writeFileSync(todayFile, renderIssue({ number, date: today, sections, failedSources }));
+writeFileSync(todayFile, renderIssue({ number, date: today, sections, failedSources, trend }));
 console.log(`已生成第 ${number} 期（${today}），不可用源 ${failedSources.length} 个`);
 // RSS/LLM 的 keep-alive 连接会拖住事件循环导致进程不退出，脚本收尾显式退出
 process.exit(0);

@@ -68,3 +68,16 @@ test('failedSources 为空时无汇总行', () => {
 test('escapeMd 只转义方括号', () => {
   assert.equal(escapeMd('a[b]c'), 'a\\[b\\]c');
 });
+
+test('有 trend 时在首个栏目前渲染今日趋势段', () => {
+  const out = renderIssue({ ...baseArgs, trend: '今天主线是 X。' });
+  const trendPos = out.indexOf('## 今日趋势');
+  assert.ok(trendPos > -1);
+  assert.ok(out.includes('今天主线是 X。'));
+  assert.ok(trendPos < out.indexOf('## AI 技术博客'));
+});
+
+test('trend 为 null 或缺省时不渲染趋势段', () => {
+  assert.ok(!renderIssue({ ...baseArgs, trend: null }).includes('今日趋势'));
+  assert.ok(!renderIssue(baseArgs).includes('今日趋势'));
+});

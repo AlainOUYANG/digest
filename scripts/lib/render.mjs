@@ -2,7 +2,7 @@ export function escapeMd(s) {
   return String(s).replace(/([[\]])/g, '\\$1');
 }
 
-export function renderIssue({ number, date, sections, failedSources }) {
+export function renderIssue({ number, date, sections, failedSources, trend = null }) {
   const lines = [
     '---',
     `title: 第 ${number} 期`,
@@ -12,6 +12,7 @@ export function renderIssue({ number, date, sections, failedSources }) {
     '---',
     '',
   ];
+  if (trend) lines.push('## 今日趋势', '', trend, '');
   for (const s of sections) {
     lines.push(`## ${s.name}`, '');
     if (s.picks.length === 0) {
