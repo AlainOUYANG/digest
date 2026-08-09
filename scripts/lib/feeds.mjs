@@ -23,15 +23,24 @@ export function stripHtml(html) {
 }
 
 export function normalizeItem(raw, sourceName) {
-  const fullText = raw['content:encoded'] || raw.content || '';
-  const snippet = (raw.contentSnippet ?? '').slice(0, 500);
+  const candidates = [
+    raw['content:encoded'],
+    raw.content,
+    raw.summary,
+    raw.description,
+    raw.contentSnippet,
+  ]
+    .map((value) => stripHtml(value ?? ''))
+    .filter(Boolean)
+    .sort((a, b) => b.length - a.length);
+  const content = (candidates[0] ?? '').slice(0, 2500);
   return {
     title: (raw.title ?? '').trim(),
     link: raw.link ?? '',
     author: raw.creator || raw.author || sourceName,
     source: sourceName,
-    snippet,
-    content: (fullText ? stripHtml(fullText) : snippet).slice(0, 2500),
+    snippet: content.slice(0, 500),
+    content,
     isoDate: raw.isoDate ?? null,
   };
 }

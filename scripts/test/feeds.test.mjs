@@ -48,3 +48,17 @@ test('normalizeItem 无全文时 content 回退 snippet', () => {
   const item = normalizeItem({ title: 'T', link: 'x', contentSnippet: 'only snippet' }, 'S');
   assert.equal(item.content, 'only snippet');
 });
+
+test('normalizeItem 从 RSS 多字段选择清洗后最长文本', () => {
+  const item = normalizeItem({
+    title: 'T',
+    link: 'https://example.com/t',
+    content: '<p>短内容</p>',
+    summary: '<p>summary 中等长度</p>',
+    description: '<p>description 提供了更完整的正文事实</p>',
+    contentSnippet: '一句简介',
+  }, 'S');
+
+  assert.equal(item.content, 'description 提供了更完整的正文事实');
+  assert.equal(item.snippet, 'description 提供了更完整的正文事实');
+});
