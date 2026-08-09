@@ -40,6 +40,46 @@ export function extractArticleText(html, maxContentLength = 6000) {
   return stripHtml(withoutNoise).slice(0, maxContentLength);
 }
 
+function isHttpUrl(value) {
+  try {
+    return ['http:', 'https:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
+export async function enrichSelectedContent(items, {
+  fetchImpl = globalThis.fetch,
+  minContentLength = 300,
+  maxContentLength = 6000,
+  timeoutMs = 10000,
+} = {}) {
+  return Promise.all(items.map(async (item) => {
+    const current = String(item.content ?? item.snippet ?? '').trim();
+    if (current.length >= minContentLength || !isHttpUrl(item.link)) return item;
+
+    try {
+      const response = await fetchImpl(item.link, {
+        headers: {
+          Accept: 'text/html,application/xhtml+xml',
+          'User-Agent': 'KzyoDigest/1.0 (+https://alainouyang.github.io/digest/)',
+        },
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const contentType = response.headers.get('content-type') ?? '';
+      if (contentType && !/text\/html|application\/xhtml\+xml/i.test(contentType)) {
+        throw new Error(`非 HTML 响应：${contentType}`);
+      }
+      const extracted = extractArticleText(await response.text(), maxContentLength);
+      return extracted.length > current.length ? { ...item, content: extracted } : item;
+    } catch (error) {
+      console.error(`[${item.source}] 原文回填失败 ${item.link}：${error.message}`);
+      return item;
+    }
+  }));
+}
+
 export function normalizeItem(raw, sourceName) {
   const candidates = [
     raw['content:encoded'],

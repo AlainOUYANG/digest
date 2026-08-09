@@ -88,3 +88,82 @@ test('extractArticleText 没有 article 时依次回退 main 和 body', () => {
   assert.equal(feeds.extractArticleText('<main><p>主区域事实</p></main>'), '主区域事实');
   assert.equal(feeds.extractArticleText('<body><p>页面事实</p></body>'), '页面事实');
 });
+
+test('enrichSelectedContent 用原文正文替换过短 RSS 内容', async () => {
+  const original = {
+    title: 'Quoting Greg Brockman',
+    link: 'https://example.com/post',
+    source: 'Simon Willison',
+    content: 'RSS 只有一句简介',
+    snippet: 'RSS 只有一句简介',
+  };
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'text/html; charset=utf-8' },
+    text: async () => '<article><p>Greg Brockman 描述 ChatGPT 主动联系同事并协调工作安排。</p></article>',
+  });
+
+  const [result] = await feeds.enrichSelectedContent([original], { fetchImpl });
+
+  assert.equal(result.content, 'Greg Brockman 描述 ChatGPT 主动联系同事并协调工作安排。');
+});
+
+test('enrichSelectedContent 正文达到门槛时保留原对象', async () => {
+  const original = { link: 'https://example.com/full', source: 'S', content: '足'.repeat(300) };
+  const fetchImpl = async () => { throw new Error('达到门槛后不应访问网络'); };
+
+  assert.equal((await feeds.enrichSelectedContent([original], { fetchImpl }))[0], original);
+});
+
+test('enrichSelectedContent 单页失败时保留该项并继续其他条目', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const failed = { link: 'https://example.com/fail', source: 'S', content: '原 RSS' };
+  const valid = { link: 'https://example.com/ok', source: 'S', content: '短 RSS' };
+  const fetchImpl = async (url) => url.endsWith('/fail')
+    ? { ok: false, status: 503, headers: { get: () => 'text/html' }, text: async () => '' }
+    : {
+        ok: true,
+        status: 200,
+        headers: { get: () => 'text/html' },
+        text: async () => `<article>${'正文'.repeat(4000)}</article>`,
+      };
+
+  const results = await feeds.enrichSelectedContent([failed, valid], { fetchImpl });
+
+  assert.equal(results[0], failed);
+  assert.equal(results[1].content.length, 6000);
+});
+
+test('enrichSelectedContent 非 HTML 响应保留 RSS 内容', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const original = { link: 'https://example.com/file.pdf', source: 'S', content: '原 RSS' };
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'application/pdf' },
+    text: async () => 'PDF bytes',
+  });
+
+  assert.equal((await feeds.enrichSelectedContent([original], { fetchImpl }))[0], original);
+});
+
+test('enrichSelectedContent 超时拒绝时保留 RSS 内容', async (t) => {
+  t.mock.method(console, 'error', () => {});
+  const original = { link: 'https://example.com/slow', source: 'S', content: '原 RSS' };
+  const fetchImpl = async () => { throw new DOMException('请求超时', 'TimeoutError'); };
+
+  assert.equal((await feeds.enrichSelectedContent([original], { fetchImpl }))[0], original);
+});
+
+test('enrichSelectedContent 无有效正文时保留 RSS 内容', async () => {
+  const original = { link: 'https://example.com/empty', source: 'S', content: '原 RSS' };
+  const fetchImpl = async () => ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'text/html' },
+    text: async () => '<body><nav>只有导航</nav></body>',
+  });
+
+  assert.equal((await feeds.enrichSelectedContent([original], { fetchImpl }))[0], original);
+});
