@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { withinWindow, normalizeItem, stripHtml } from '../lib/feeds.mjs';
+import * as feeds from '../lib/feeds.mjs';
+
+const { withinWindow, normalizeItem, stripHtml } = feeds;
 
 const now = new Date('2026-07-12T12:00:00Z');
 
@@ -61,4 +63,28 @@ test('normalizeItem 从 RSS 多字段选择清洗后最长文本', () => {
 
   assert.equal(item.content, 'description 提供了更完整的正文事实');
   assert.equal(item.snippet, 'description 提供了更完整的正文事实');
+});
+
+test('extractArticleText 优先提取 article 并移除页面噪声', () => {
+  const html = `
+    <body>
+      <nav>站点导航</nav>
+      <article>
+        <header>文章头部</header>
+        <p>Greg Brockman 说 ChatGPT 会主动联系同事并协调工作。</p>
+        <script>window.secret = '不要进入正文';</script>
+        <p>这展示了智能体对人际协作关系的影响。</p>
+      </article>
+      <footer>版权信息</footer>
+    </body>`;
+
+  assert.equal(
+    feeds.extractArticleText(html),
+    'Greg Brockman 说 ChatGPT 会主动联系同事并协调工作。 这展示了智能体对人际协作关系的影响。',
+  );
+});
+
+test('extractArticleText 没有 article 时依次回退 main 和 body', () => {
+  assert.equal(feeds.extractArticleText('<main><p>主区域事实</p></main>'), '主区域事实');
+  assert.equal(feeds.extractArticleText('<body><p>页面事实</p></body>'), '页面事实');
 });
