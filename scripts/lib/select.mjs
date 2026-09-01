@@ -1,9 +1,12 @@
 import { enrichSelectedContent } from './feeds.mjs';
 
 const PLACEHOLDER_SUMMARY = /(?:未提供|没有提供).{0,8}(?:具体)?(?:内容|信息|细节)|具体.{0,12}(?:未详述|未列举)|建议.{0,8}(?:查阅|阅读|查看).{0,8}(?:原文|链接)|值得关注.{0,8}(?:后续|进展)/;
+const HAS_CJK = /[\u3400-\u9fff]/;
 
 function sanitizeSummary(value) {
   const summary = String(value ?? '').trim();
+  if (!summary) return '';
+  if (!HAS_CJK.test(summary)) return '';
   return PLACEHOLDER_SUMMARY.test(summary) ? '' : summary;
 }
 
@@ -35,15 +38,24 @@ async function attempt(chat, section, items, enrich) {
     .filter(Boolean);
   if (selected.length === 0) return [];
   const chosen = section.key === 'jike' ? selected : await enrich(selected);
-  const summaries = extractJson(
-    await chat([
-      { role: 'system', content: '你是中文技术编辑，只输出 JSON，不输出其他文字。' },
-      {
-        role: 'user',
-        content: `为每条写 3-4 句中文摘要（120-180 字）：先说讲了什么，再给关键结论或数据，最后一句说为什么值得读。原文很短的条目（如社交动态）提炼核心观点即可，不要硬凑字数。只能总结输入文本明确提供的信息，不得根据标题、作者身份或常识补写事实。证据不足时 summary 返回空字符串，不得写「未提供具体内容」「建议查阅原文」「值得关注后续」等占位话术。只输出 JSON [{"i":序号,"summary":"..."}]：\n${JSON.stringify(chosen.map((c, i) => ({ i, title: c.title, text: (c.content ?? c.snippet).slice(0, 6000) })))}`,
-      },
-    ]),
-  );
+  const summarize = async (forceChinese = false) =>
+    extractJson(
+      await chat([
+        { role: 'system', content: '你是中文技术编辑，只输出 JSON，不输出其他文字。' },
+        {
+          role: 'user',
+          content: forceChinese
+            ? `上轮摘要未使用简体中文。请为每条重写 3-4 句中文摘要（120-180 字）：先说讲了什么，再给关键结论或数据，最后一句说为什么值得读。只能总结输入文本明确提供的信息，不得根据标题、作者身份或常识补写事实。证据不足时 summary 返回空字符串，不得写「未提供具体内容」「建议查阅原文」「值得关注后续」等占位话术。只输出 JSON [{"i":序号,"summary":"..."}]：\n${JSON.stringify(chosen.map((c, i) => ({ i, title: c.title, text: (c.content ?? c.snippet).slice(0, 6000) })))}`
+            : `为每条写 3-4 句中文摘要（120-180 字）：先说讲了什么，再给关键结论或数据，最后一句说为什么值得读。原文很短的条目（如社交动态）提炼核心观点即可，不要硬凑字数。只能总结输入文本明确提供的信息，不得根据标题、作者身份或常识补写事实。证据不足时 summary 返回空字符串，不得写「未提供具体内容」「建议查阅原文」「值得关注后续」等占位话术。只输出 JSON [{"i":序号,"summary":"..."}]：\n${JSON.stringify(chosen.map((c, i) => ({ i, title: c.title, text: (c.content ?? c.snippet).slice(0, 6000) })))}`,
+        },
+      ]),
+    );
+  let summaries = await summarize();
+  const nonChinese = summaries.filter((s) => s.summary && !HAS_CJK.test(s.summary));
+  if (nonChinese.length > 0) {
+    console.warn(`[${section.name}] ${nonChinese.length} 条摘要非中文，强制重试`);
+    summaries = await summarize(true);
+  }
   return chosen.map((c, i) => ({
     ...c,
     summary: sanitizeSummary(summaries.find((s) => s.i === i)?.summary),

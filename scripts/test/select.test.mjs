@@ -119,3 +119,46 @@ test('selectAndSummarize 丢弃占位式摘要', async () => {
 
   assert.equal(result.picks[0].summary, '');
 });
+test('selectAndSummarize 英文摘要触发强制中文重试', async () => {
+  let call = 0;
+  let retryPrompt = '';
+  const fakeChat = async (messages) => {
+    call += 1;
+    if (call === 1) return '[{"i":0,"score":10}]';
+    if (call === 2) {
+      retryPrompt = messages[1].content;
+      return '[{"i":0,"summary":"This is an English summary."}]';
+    }
+    return '[{"i":0,"summary":"这是重试后的中文摘要"}]';
+  };
+
+  const result = await selectAndSummarize(
+    fakeChat,
+    { ...section, topN: 1 },
+    [items[0]],
+    { enrich: async (chosen) => chosen },
+  );
+
+  assert.equal(call, 3, '英文摘要应触发一次强制中文重试');
+  assert.equal(result.picks[0].summary, '这是重试后的中文摘要');
+  assert.ok(retryPrompt.includes('中文摘要'), '重试 prompt 应再次要求中文摘要');
+});
+
+test('selectAndSummarize 重试仍为英文时摘要置空', async () => {
+  let call = 0;
+  const fakeChat = async () => {
+    call += 1;
+    return call === 1
+      ? '[{"i":0,"score":10}]'
+      : '[{"i":0,"summary":"Still English summary."}]';
+  };
+
+  const result = await selectAndSummarize(
+    fakeChat,
+    { ...section, topN: 1 },
+    [items[0]],
+    { enrich: async (chosen) => chosen },
+  );
+
+  assert.equal(result.picks[0].summary, '', '重试仍英文时应置空而非放行英文');
+});
