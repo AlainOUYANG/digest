@@ -2,7 +2,48 @@ import Parser from 'rss-parser';
 
 const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
-const parser = new Parser({ timeout: 15000, headers: { 'User-Agent': BROWSER_UA } });
+const BROWSER_HEADERS = {
+  'User-Agent': BROWSER_UA,
+  Accept: 'application/rss+xml, application/atom+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.7',
+  'Accept-Language': 'en-US,en;q=0.9',
+  'Cache-Control': 'no-cache',
+};
+
+const parser = new Parser({ timeout: 15000, headers: BROWSER_HEADERS });
+
+const DEFAULT_FEED_PROXIES = [
+  'https://api.allorigins.win/raw?url={url}',
+  'https://api.codetabs.com/v1/proxy?quest={raw}',
+];
+
+export function feedProxies(env = process.env) {
+  const configured = env.FEED_PROXIES;
+  if (configured === undefined) return DEFAULT_FEED_PROXIES;
+  return configured.split(',').map((p) => p.trim()).filter(Boolean);
+}
+
+export async function parseFeed(url, {
+  parseUrl = (target) => parser.parseURL(target),
+  proxies = feedProxies(),
+} = {}) {
+  try {
+    return await parseUrl(url);
+  } catch (directError) {
+    for (const template of proxies) {
+      const proxied = template
+        .replace('{url}', encodeURIComponent(url))
+        .replace('{raw}', url);
+      try {
+        const feed = await parseUrl(proxied);
+        console.log(`[代理抓取] ${url} 直连失败（${directError.message}），经 ${new URL(proxied).host} 成功`);
+        return feed;
+      } catch {
+        // 换下一个代理
+      }
+    }
+    throw directError;
+  }
+}
 
 export function withinWindow(item, now = new Date(), hours = 24) {
   const t = item.isoDate ? Date.parse(item.isoDate) : NaN;
@@ -110,7 +151,7 @@ export async function fetchGroup(feeds, { now = new Date(), hours = 24 } = {}) {
   const failed = [];
   const results = await Promise.allSettled(
     feeds.map((f) =>
-      parser.parseURL(f.url).then((p) => p.items.map((i) => normalizeItem(i, f.name))),
+      parseFeed(f.url).then((p) => p.items.map((i) => normalizeItem(i, f.name))),
     ),
   );
   results.forEach((r, idx) => {
