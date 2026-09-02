@@ -162,3 +162,36 @@ test('selectAndSummarize 重试仍为英文时摘要置空', async () => {
 
   assert.equal(result.picks[0].summary, '', '重试仍英文时应置空而非放行英文');
 });
+
+test('selectAndSummarize 淘汰低于 minScore 的条目', async () => {
+  let call = 0;
+  const fakeChat = async () => {
+    call += 1;
+    return call === 1
+      ? '[{"i":0,"score":9},{"i":1,"score":3},{"i":2,"score":7}]'
+      : '[{"i":0,"summary":"中文摘要甲"},{"i":1,"summary":"中文摘要乙"}]';
+  };
+
+  const { picks } = await selectAndSummarize(
+    fakeChat,
+    { ...section, topN: 3, minScore: 6 },
+    items,
+    { enrich: async (chosen) => chosen },
+  );
+
+  assert.deepEqual(picks.map((p) => p.title), ['A', 'C'], '3 分条目应被相关性门槛淘汰');
+});
+
+test('selectAndSummarize 全部低于 minScore 时该栏目留空', async () => {
+  const fakeChat = async () => '[{"i":0,"score":2},{"i":1,"score":1},{"i":2,"score":3}]';
+
+  const { picks, degraded } = await selectAndSummarize(
+    fakeChat,
+    { ...section, minScore: 6 },
+    items,
+    { enrich: async (chosen) => chosen },
+  );
+
+  assert.deepEqual(picks, [], '无相关内容时应留空而非硬填');
+  assert.equal(degraded, false);
+});

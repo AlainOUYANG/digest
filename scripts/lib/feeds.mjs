@@ -1,6 +1,8 @@
 import Parser from 'rss-parser';
 
-const parser = new Parser({ timeout: 15000 });
+const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
+const parser = new Parser({ timeout: 15000, headers: { 'User-Agent': BROWSER_UA } });
 
 export function withinWindow(item, now = new Date(), hours = 24) {
   const t = item.isoDate ? Date.parse(item.isoDate) : NaN;
@@ -62,7 +64,7 @@ export async function enrichSelectedContent(items, {
       const response = await fetchImpl(item.link, {
         headers: {
           Accept: 'text/html,application/xhtml+xml',
-          'User-Agent': 'KzyoDigest/1.0 (+https://alainouyang.github.io/digest/)',
+          'User-Agent': BROWSER_UA,
         },
         signal: AbortSignal.timeout(timeoutMs),
       });

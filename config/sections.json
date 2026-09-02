@@ -4,6 +4,7 @@
     "name": "AI 技术博客",
     "focus": "AI/LLM 应用、工程实践与行业动态",
     "topN": 8,
+    "minScore": 6,
     "feeds": "feeds-ai.json"
   },
   {

@@ -109,6 +109,26 @@ test('enrichSelectedContent 用原文正文替换过短 RSS 内容', async () =>
   assert.equal(result.content, 'Greg Brockman 描述 ChatGPT 主动联系同事并协调工作安排。');
 });
 
+test('enrichSelectedContent 用浏览器 UA 请求原文', async () => {
+  let seen = null;
+  const fetchImpl = async (_url, init) => {
+    seen = init.headers;
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: () => 'text/html' },
+      text: async () => `<article>${'正'.repeat(400)}</article>`,
+    };
+  };
+
+  await feeds.enrichSelectedContent(
+    [{ link: 'https://example.com/p', source: 'S', content: '短' }],
+    { fetchImpl },
+  );
+
+  assert.match(seen['User-Agent'], /^Mozilla\/5\.0 /, '原文回填应使用浏览器 UA 以绕过反爬');
+});
+
 test('enrichSelectedContent 正文达到门槛时保留原对象', async () => {
   const original = { link: 'https://example.com/full', source: 'S', content: '足'.repeat(300) };
   const fetchImpl = async () => { throw new Error('达到门槛后不应访问网络'); };

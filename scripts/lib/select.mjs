@@ -30,8 +30,12 @@ async function attempt(chat, section, items, enrich) {
       },
     ]),
   );
-  const selected = scored
-    .filter((s) => Number.isFinite(s.score))
+  const minScore = section.minScore ?? 0;
+  const qualified = scored.filter((s) => Number.isFinite(s.score) && s.score >= minScore);
+  if (minScore > 0) {
+    console.log(`[${section.name}] 评分 ${scored.length} 条，过门槛（≥${minScore}）${qualified.length} 条`);
+  }
+  const selected = qualified
     .sort((a, b) => b.score - a.score)
     .slice(0, section.topN)
     .map((s) => items[s.i])
