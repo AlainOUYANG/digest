@@ -24,24 +24,20 @@
     "url": "https://magazine.sebastianraschka.com/feed"
   },
   {
-    "name": "importai.substack.com",
-    "url": "https://importai.substack.com/feed"
+    "name": "jack-clark.net",
+    "url": "https://jack-clark.net/feed/"
   },
   {
-    "name": "thezvi.substack.com",
-    "url": "https://thezvi.substack.com/feed"
+    "name": "thezvi.wordpress.com",
+    "url": "https://thezvi.wordpress.com/feed/"
   },
   {
     "name": "understandingai.org",
     "url": "https://www.understandingai.org/feed"
   },
   {
-    "name": "garymarcus.substack.com",
-    "url": "https://garymarcus.substack.com/feed"
-  },
-  {
     "name": "gwern.net",
-    "url": "https://gwern.substack.com/feed"
+    "url": "https://gwern.net/index.xml"
   },
   {
     "name": "dwarkesh.com",
@@ -116,10 +112,6 @@
     "url": "https://deepmind.google/blog/rss.xml"
   },
   {
-    "name": "ai.meta.com",
-    "url": "https://ai.meta.com/blog/rss/"
-  },
-  {
     "name": "research.google",
     "url": "https://research.google/blog/rss/"
   },
@@ -128,16 +120,12 @@
     "url": "https://blog.google/technology/ai/rss/"
   },
   {
-    "name": "bair.berkeley.edu",
-    "url": "https://bair.berkeley.edu/blog/feed.xml"
-  },
-  {
     "name": "pytorch.org",
     "url": "https://pytorch.org/blog/feed.xml"
   },
   {
-    "name": "blog.langchain.com",
-    "url": "https://blog.langchain.com/rss/"
+    "name": "blog.langchain.dev",
+    "url": "https://blog.langchain.dev/rss/"
   },
   {
     "name": "aws.amazon.com/blogs/machine-learning",
@@ -145,15 +133,11 @@
   },
   {
     "name": "every.to",
-    "url": "https://every.to/feed.xml"
+    "url": "https://every.to/api/feed.xml"
   },
   {
     "name": "newsletter.pragmaticengineer.com",
     "url": "https://newsletter.pragmaticengineer.com/feed"
-  },
-  {
-    "name": "worksonmymachine.substack.com",
-    "url": "https://worksonmymachine.substack.com/feed"
   },
   {
     "name": "lucumr.pocoo.org",
@@ -210,10 +194,6 @@
   {
     "name": "pluralistic.net",
     "url": "https://pluralistic.net/feed/"
-  },
-  {
-    "name": "joanwestenberg.com",
-    "url": "https://joanwestenberg.com/rss"
   },
   {
     "name": "paulgraham.com",
