@@ -89,6 +89,10 @@ export async function enrichSelectedContent(items, {
   }));
 }
 
+function asText(value) {
+  return typeof value === 'string' ? value : '';
+}
+
 export function normalizeItem(raw, sourceName) {
   const candidates = [
     raw['content:encoded'],
@@ -97,14 +101,14 @@ export function normalizeItem(raw, sourceName) {
     raw.description,
     raw.contentSnippet,
   ]
-    .map((value) => stripHtml(value ?? ''))
+    .map((value) => stripHtml(asText(value)))
     .filter(Boolean)
     .sort((a, b) => b.length - a.length);
   const content = (candidates[0] ?? '').slice(0, 2500);
   return {
-    title: (raw.title ?? '').trim(),
-    link: raw.link ?? '',
-    author: raw.creator || raw.author || sourceName,
+    title: asText(raw.title).trim(),
+    link: asText(raw.link),
+    author: asText(raw.creator) || asText(raw.author) || sourceName,
     source: sourceName,
     snippet: content.slice(0, 500),
     content,

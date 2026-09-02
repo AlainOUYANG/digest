@@ -30,6 +30,21 @@ test('normalizeItem 无作者时回退到源名', () => {
   assert.equal(item.source, 'MySource');
 });
 
+test('normalizeItem 作者字段为畸形对象时回退到源名而非崩溃', () => {
+  const brokenAuthor = Object.create(null);
+  brokenAuthor.name = ['News from Google Team'];
+  const item = normalizeItem(
+    { title: 'T', link: 'https://a.b/c', creator: brokenAuthor, author: brokenAuthor },
+    'blog.google/technology/ai',
+  );
+  assert.equal(item.author, 'blog.google/technology/ai');
+});
+
+test('normalizeItem 标题字段为对象时回退为空字符串而非崩溃', () => {
+  const item = normalizeItem({ title: Object.create(null), link: 'https://a.b/c' }, 'S');
+  assert.equal(item.title, '');
+});
+
 test('normalizeItem 截断 snippet 到 500 字', () => {
   const item = normalizeItem({ title: 'T', link: 'x', contentSnippet: 'a'.repeat(600) }, 'S');
   assert.equal(item.snippet.length, 500);
