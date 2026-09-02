@@ -3,16 +3,9 @@
     "key": "ai",
     "name": "AI 技术博客",
     "focus": "AI/LLM 应用、工程实践与行业动态",
-    "topN": 8,
+    "topN": 14,
     "minScore": 6,
     "feeds": "feeds-ai.json"
-  },
-  {
-    "key": "causal",
-    "name": "因果推断与营销科学",
-    "focus": "因果推断、Uplift Modeling、实验设计与营销科学",
-    "topN": 6,
-    "feeds": "feeds-causal.json"
   },
   {
     "key": "jike",

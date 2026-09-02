@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs';
 
 const dir = new URL('../src/content/issues/', import.meta.url);
-const required = ['AI 技术博客', '因果推断与营销科学', '即刻简报'];
+const required = ['AI 技术博客', '即刻简报'];
 const errors = [];
 
 for (const file of readdirSync(dir).filter((f) => f.endsWith('.md'))) {

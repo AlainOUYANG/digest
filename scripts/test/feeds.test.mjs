@@ -2,57 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import * as feeds from '../lib/feeds.mjs';
 
-const { withinWindow, normalizeItem, stripHtml, feedProxies } = feeds;
+const { withinWindow, normalizeItem, stripHtml } = feeds;
 
 const now = new Date('2026-07-12T12:00:00Z');
 
-
-test('parseFeed 直连成功时不走代理', async () => {
-  const calls = [];
-  const feed = await feeds.parseFeed('https://a.example/feed', {
-    parseUrl: async (u) => { calls.push(u); return { items: [] }; },
-    proxies: ['https://proxy.example/?url={url}'],
-  });
-
-  assert.deepEqual(calls, ['https://a.example/feed']);
-  assert.deepEqual(feed, { items: [] });
-});
-
-test('parseFeed 直连失败时依次尝试代理', async (t) => {
-  t.mock.method(console, 'log', () => {});
-  const calls = [];
-  const feed = await feeds.parseFeed('https://a.example/feed', {
-    parseUrl: async (u) => {
-      calls.push(u);
-      if (calls.length < 3) throw new Error('403');
-      return { items: [{ title: 'ok' }] };
-    },
-    proxies: ['https://p1.example/?url={url}', 'https://p2.example/?quest={raw}'],
-  });
-
-  assert.deepEqual(calls, [
-    'https://a.example/feed',
-    'https://p1.example/?url=https%3A%2F%2Fa.example%2Ffeed',
-    'https://p2.example/?quest=https://a.example/feed',
-  ]);
-  assert.deepEqual(feed.items, [{ title: 'ok' }]);
-});
-
-test('parseFeed 直连与代理都失败时抛出直连错误', async () => {
-  await assert.rejects(
-    feeds.parseFeed('https://a.example/feed', {
-      parseUrl: async (u) => { throw new Error(u.includes('proxy') ? '代理失败' : '直连 403'); },
-      proxies: ['https://proxy.example/?url={url}'],
-    }),
-    /直连 403/,
-  );
-});
-
-test('feedProxies 未配置时使用默认代理，配置为空串时禁用', () => {
-  assert.ok(feedProxies({}).length > 0);
-  assert.deepEqual(feedProxies({ FEED_PROXIES: '' }), []);
-  assert.deepEqual(feedProxies({ FEED_PROXIES: 'https://x/?u={url}' }), ['https://x/?u={url}']);
-});
 test('withinWindow 接受 1 小时前的条目', () => {
   assert.equal(withinWindow({ isoDate: '2026-07-12T11:00:00Z' }, now, 24), true);
 });

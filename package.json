@@ -1,7 +1,7 @@
 {
   "name": "kzyo-digest",
   "version": "1.0.0",
-  "description": "Kzyo 每日简报：AI 技术博客、因果推断与营销科学、即刻动态的每日聚合摘要",
+  "description": "Kzyo 每日简报：AI 技术博客、即刻动态的每日聚合摘要",
   "type": "module",
   "scripts": {
     "dev": "ASTRO_TELEMETRY_DISABLED=1 astro dev",

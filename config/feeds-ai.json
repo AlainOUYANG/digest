@@ -186,17 +186,5 @@
   {
     "name": "paulgraham.com",
     "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss"
-  },
-  {
-    "name": "gwern.net",
-    "url": "https://gwern.net/index.xml"
-  },
-  {
-    "name": "blog.langchain.dev",
-    "url": "https://blog.langchain.dev/rss/"
-  },
-  {
-    "name": "every.to",
-    "url": "https://every.to/api/feed.xml"
   }
 ]
