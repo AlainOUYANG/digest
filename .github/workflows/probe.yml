@@ -1,0 +1,21 @@
+name: Probe feeds
+
+on:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: 待诊断的 feed 地址，空格分隔；留空则用脚本默认清单
+        required: false
+        default: ''
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: node scripts/probe-feeds.mjs ${{ inputs.urls }}
