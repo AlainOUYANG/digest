@@ -36,10 +36,6 @@
     "url": "https://www.understandingai.org/feed"
   },
   {
-    "name": "gwern.net",
-    "url": "https://gwern.net/index.xml"
-  },
-  {
     "name": "dwarkesh.com",
     "url": "https://www.dwarkeshpatel.com/feed"
   },
@@ -124,16 +120,8 @@
     "url": "https://pytorch.org/blog/feed.xml"
   },
   {
-    "name": "blog.langchain.dev",
-    "url": "https://blog.langchain.dev/rss/"
-  },
-  {
     "name": "aws.amazon.com/blogs/machine-learning",
     "url": "https://aws.amazon.com/blogs/machine-learning/feed/"
-  },
-  {
-    "name": "every.to",
-    "url": "https://every.to/api/feed.xml"
   },
   {
     "name": "newsletter.pragmaticengineer.com",
