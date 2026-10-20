@@ -1,0 +1,63 @@
+name: Diagnose summary connectivity
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Check DNS, HTTPS and TLS without credentials
+        shell: bash
+        run: |
+          node --input-type=module <<'JS'
+          import dns from 'node:dns/promises';
+          import https from 'node:https';
+          const host = 'ark.cn-beijing.volces.com';
+          const url = `https://${host}/api/v3/models`;
+          console.log('RUNTIME', process.version, process.versions.openssl, process.versions.undici);
+          function errorDetails(e) {
+            return { name: e.name, message: e.message, code: e.code,
+              cause: e.cause ? errorDetails(e.cause) : undefined,
+              errors: e.errors?.map(errorDetails) };
+          }
+          for (const type of ['resolve4', 'resolve6', 'lookup']) {
+            try { console.log('DNS', type, JSON.stringify(await dns[type](host, type === 'lookup' ? {all:true} : undefined))); }
+            catch(e) { console.log('DNS_ERROR', type, JSON.stringify(errorDetails(e))); }
+          }
+          for (let i=0; i<3; i++) {
+            const t=Date.now();
+            try {
+              const r=await fetch(url, {signal:AbortSignal.timeout(12000)});
+              console.log('FETCH', i, 'HTTP', r.status, 'ms', Date.now()-t);
+              await r.body?.cancel();
+            } catch(e) { console.log('FETCH_ERROR', i, 'ms', Date.now()-t, JSON.stringify(errorDetails(e))); }
+          }
+          for (const family of [4,6]) {
+            await new Promise(resolve=>{
+              const req=https.get(url, {family, timeout:12000}, r=>{
+                console.log('HTTPS', family, 'HTTP', r.statusCode);
+                const cert=r.socket.getPeerCertificate();
+                console.log('TLS', family, JSON.stringify({authorized:r.socket.authorized, subject:cert.subject, issuer:cert.issuer, valid_from:cert.valid_from, valid_to:cert.valid_to}));
+                r.resume(); r.on('end', resolve);
+              });
+              req.on('timeout', ()=>req.destroy(new Error('HTTPS timeout')));
+              req.on('error', e=>{console.log('HTTPS_ERROR', family, JSON.stringify(errorDetails(e)));resolve();});
+            });
+          }
+          JS
+          for family in -4 -6; do
+            echo "CURL $family"
+            curl "$family" --connect-timeout 10 --max-time 15 --silent --show-error --output /dev/null --write-out 'HTTP %{http_code}; remote_ip %{remote_ip}; ssl_verify %{ssl_verify_result}\n' https://ark.cn-beijing.volces.com/api/v3/models || true
+          done
