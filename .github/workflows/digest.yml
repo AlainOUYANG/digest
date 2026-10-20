@@ -17,7 +17,11 @@ concurrency:
 jobs:
   generate:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
+    outputs:
+      health_status: ${{ steps.digest.outputs.health_status }}
+      summary_total: ${{ steps.digest.outputs.summary_total }}
+      summary_count: ${{ steps.digest.outputs.summary_count }}
     services:
       rsshub:
         image: diygod/rsshub
@@ -29,8 +33,14 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - run: node scripts/run-digest.mjs
+      - name: Test digest pipeline
+        run: npm test
+      - name: Generate digest with IPv4 networking
+        id: digest
+        run: node scripts/run-digest.mjs
         env:
+          # Avoid the short dual-stack fallback window on runners without IPv6.
+          NODE_OPTIONS: --dns-result-order=ipv4first --no-network-family-autoselection
           ARK_API_KEY: ${{ secrets.ARK_API_KEY }}
           ARK_MODEL: ${{ secrets.ARK_MODEL }}
           RSSHUB_BASES: http://localhost:1200,https://rsshub.app
@@ -42,6 +52,30 @@ jobs:
           git add src/content/issues
           git diff --cached --quiet || git commit -m "content: $(date -u +%F) 期简报"
           git push
+
+  # Report summary health separately: a title-only edition may still publish,
+  # but a serious summary outage must make the overall workflow red.
+  summary-health:
+    needs: generate
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce summary availability
+        env:
+          GENERATE_RESULT: ${{ needs.generate.result }}
+          HEALTH_STATUS: ${{ needs.generate.outputs.health_status }}
+          SUMMARY_TOTAL: ${{ needs.generate.outputs.summary_total }}
+          SUMMARY_COUNT: ${{ needs.generate.outputs.summary_count }}
+        run: |
+          echo "## 摘要健康检查" >> "$GITHUB_STEP_SUMMARY"
+          echo "摘要覆盖：${SUMMARY_COUNT:-0}/${SUMMARY_TOTAL:-0}；状态：${HEALTH_STATUS:-unknown}" >> "$GITHUB_STEP_SUMMARY"
+          if [ "$GENERATE_RESULT" != success ] || [ -z "$HEALTH_STATUS" ] || [ "$HEALTH_STATUS" = degraded ]; then
+            echo '::error title=简报摘要异常::生成任务失败、健康报告缺失或摘要严重降级；请查看 generate 日志与摘要覆盖率。标题版发布成功不代表摘要服务恢复。'
+            exit 1
+          fi
+          if [ "$HEALTH_STATUS" = warning ]; then
+            echo '::warning title=简报质量提醒::存在个别摘要缺失、趋势缺失或不可用来源；请查看 generate 的健康报告。'
+          fi
 
   # Actions 内用 GITHUB_TOKEN push 不会触发 deploy.yml，因此这里自带构建与部署
   publish:

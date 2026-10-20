@@ -4,6 +4,7 @@ import { createClient } from './lib/llm.mjs';
 import { selectAndSummarize } from './lib/select.mjs';
 import { buildTrend } from './lib/trend.mjs';
 import { renderIssue } from './lib/render.mjs';
+import { evaluateHealth, reportHealth } from './lib/health.mjs';
 
 const CONTENT_DIR = new URL('../src/content/issues/', import.meta.url);
 const loadJson = (p) => JSON.parse(readFileSync(new URL(`../config/${p}`, import.meta.url), 'utf8'));
@@ -45,5 +46,7 @@ if (existsSync(todayFile)) {
 }
 writeFileSync(todayFile, renderIssue({ number, date: today, sections, failedSources, trend }));
 console.log(`已生成第 ${number} 期（${today}），不可用源 ${failedSources.length} 个`);
+// Report degradation without blocking title-only publishing; CI gates health separately.
+reportHealth(evaluateHealth({ sections, trend, failedSources }));
 // RSS/LLM 的 keep-alive 连接会拖住事件循环导致进程不退出，脚本收尾显式退出
 process.exit(0);
