@@ -2,6 +2,9 @@ name: Diagnose summary connectivity
 
 on:
   workflow_dispatch:
+  push:
+    branches: [diagnostics/summary-connectivity]
+    paths: [.github/workflows/diagnose-summary.yml]
 
 permissions:
   contents: read
