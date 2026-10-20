@@ -2,6 +2,9 @@ name: Daily digest
 
 on:
   workflow_dispatch:
+  push:
+    branches: [verification/summary-live]
+    paths: [.github/workflows/digest.yml]
   schedule:
     - cron: '0 11 * * *'
 
@@ -29,6 +32,8 @@ jobs:
           - '1200:1200'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: master
       - uses: actions/setup-node@v4
         with:
           node-version: 22
