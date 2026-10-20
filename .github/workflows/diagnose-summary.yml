@@ -64,3 +64,22 @@ jobs:
             echo "CURL $family"
             curl "$family" --connect-timeout 10 --max-time 15 --silent --show-error --output /dev/null --write-out 'HTTP %{http_code}; remote_ip %{remote_ip}; ssl_verify %{ssl_verify_result}\n' https://ark.cn-beijing.volces.com/api/v3/models || true
           done
+      - name: Validate IPv4-only Node fetch workaround without credentials
+        shell: bash
+        run: |
+          node --dns-result-order=ipv4first --no-network-family-autoselection --input-type=module <<'JS'
+          let failed = 0;
+          for (let i=0; i<3; i++) {
+            const t=Date.now();
+            try {
+              const r=await fetch('https://ark.cn-beijing.volces.com/api/v3/models', {signal:AbortSignal.timeout(15000)});
+              console.log('FETCH_IPV4', i, 'HTTP', r.status, 'ms', Date.now()-t);
+              if (r.status !== 401) failed++;
+              await r.body?.cancel();
+            } catch(e) {
+              failed++;
+              console.log('FETCH_IPV4_ERROR', i, e.message, e.cause?.code, e.cause?.message);
+            }
+          }
+          if (failed) process.exit(1);
+          JS
